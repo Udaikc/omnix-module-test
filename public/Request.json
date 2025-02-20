@@ -1,0 +1,224 @@
+{
+  "compromisedConversations": false,
+  "geoLocationBased": false,
+  "isExpansionOnGeoLocation": false,
+  "perspectiveId": "CONVERSATION",
+  "viewContextId": "CONV_APP",
+  "columns": [
+    "resolvedHostB",
+    "hostRole",
+    "hostType",
+    "protocol",
+    "serverPort",
+    "hostB",
+    "geoLocation",
+    "hostGroupBName",
+    "hostGroupB",
+    "appId",
+    "xdrEnabled",
+    "isMaliciousApp",
+    "iocId",
+    "ispName",
+    "ispAutonomousSystemOrg",
+    "ispAutonomousSystemNo",
+    "serverOctets"
+  ],
+  "appliedFilters": {
+    "melocation": {
+      "values": [
+        "172.22.33.34#3"
+      ]
+    },
+    "hostA": {
+      "values": [
+        "172.22.12.57"
+      ]
+    }
+  },
+  "startTime": 1738569600000,
+  "endTime": 1738591200000,
+  "resolution": "NO_RESOLUTION",
+  "resolutionValue": null,
+  "moduleId": "HostForensic",
+  "columnDetails": [
+    {
+      "selection": "FIXED",
+      "show": true,
+      "id": "resolvedHostB",
+      "type": "DIMENSION",
+      "dbOneCol": "hostB",
+      "displayName": "IDS_COLUMN_HOST_B",
+      "dataType": "String",
+      "decodeTag": "",
+      "baseColumn": "hostB"
+    },
+    {
+      "show": false,
+      "id": "hostRole",
+      "type": "DIMENSION",
+      "dbOneCol": "hostRole",
+      "displayName": "IDS_COLUMN_HOST_ROLE",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "hostType",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_COLUMN_HOST_TYPE",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "protocol",
+      "type": "DIMENSION",
+      "dbOneCol": "appId",
+      "displayName": "IDS_COLUMN_APPLICATION",
+      "dataType": "String",
+      "decodeTag": "application",
+      "baseColumn": "appId"
+    },
+    {
+      "show": false,
+      "id": "serverPort",
+      "type": "DIMENSION",
+      "dbOneCol": "serverPort",
+      "displayName": "IDS_COLUMN_SERVER_PORT",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": "hidden",
+      "id": "hostB",
+      "type": "DIMENSION",
+      "dbOneCol": "hostB",
+      "displayName": "IDS_COLUMN_HOST_B",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "displayName": "IDS_COLUMN_GEO_LOCATION",
+      "show": true,
+      "id": "geoLocation",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "hostGroupBName",
+      "type": "DIMENSION",
+      "dbOneCol": "hostGroupB",
+      "showInTooltip": true,
+      "displayName": "IDS_COLUMN_HOST_GROUP",
+      "dataType": "String",
+      "decodeTag": "",
+      "baseColumn": "hostGroupB"
+    },
+    {
+      "show": "hidden",
+      "id": "hostGroupB",
+      "type": "DIMENSION",
+      "dbOneCol": "hostGroupB",
+      "displayName": "IDS_COLUMN_HOST_GROUP",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": "hidden",
+      "id": "appId",
+      "type": "DIMENSION",
+      "dbOneCol": "appId",
+      "displayName": "IDS_COLUMN_APPLICATION",
+      "dataType": "String",
+      "decodeTag": "application"
+    },
+    {
+      "show": "hidden",
+      "id": "xdrEnabled",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_COLUMN_XDR_ENABLED",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": true,
+      "id": "isMaliciousApp",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_COLUMN_IS_MALICIOUS_APP",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": "hidden",
+      "id": "iocId",
+      "type": "DIMENSION",
+      "dbOneCol": "iocId",
+      "displayName": "IDS_COLUMN_IOC",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "ispName",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_COLUMN_ISP_NAME",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "ispAutonomousSystemOrg",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_COLUMN_ISP_AUTONOMOUS_ORGANISATION",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "show": false,
+      "id": "ispAutonomousSystemNo",
+      "type": "DIMENSION",
+      "dbOneCol": "",
+      "displayName": "IDS_AUTONOMOUS_SYSTEM_NO",
+      "dataType": "String",
+      "decodeTag": ""
+    },
+    {
+      "directionGroup": "IDS_COLUMN_VOLUME",
+      "displayName": "IDS_COLUMN_VOLUME_TOTAL",
+      "dataType": "Number",
+      "format": "mFormatter",
+      "metricGroup": "KSI",
+      "unit": "B",
+      "decodeTag": "",
+      "colorCode": "#007E00",
+      "id": "serverOctets",
+      "convCol": "octets",
+      "dbOneCol": "serverOctets",
+      "decimal": 2,
+      "direction": "Total",
+      "baselineCol": "",
+      "show": true,
+      "type": "MEASURE",
+      "showInViewOption": true,
+      "showInTooltip": true,
+      "cutOffCol": "",
+      "cutOffBelowCol": "",
+      "validation": ""
+    }
+  ],
+  "storeConstant": "VIEW_DATA",
+  "uniqueIdentifier": 1738591549013,
+  "topNValue": 50,
+  "topOrder": "descending",
+  "topColumn": "serverOctets",
+  "isFlowRequest": false,
+  "workspaceIdentifier": 1738591549013
+}
