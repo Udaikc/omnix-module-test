@@ -1,26 +1,25 @@
-/**
- the component mainly defines interface class / later will be moved
- to type
- */
-export interface EyeballPropsRow {
-    0: string;  // resolvedHostB
-    1: string;  // hostRole
-    2: string;  // hostType
-    3: string;  // protocol
-    4: number;  // serverPort
-    5: string;  // hostB
-    6: string;  // geoLocation
-    7: string;  // hostGroup
-    8: number;  // appId
-    9: string;  // xdrEnabled
-    10: string; // isMaliciousApp
-    11: number; // iocId
-    12: string; // ispName
-    13: string; // ispAutonomousSystemOrg
-    14: string; // ispAutonomousSystemNo
-    15: number; // serverOctets
-}
+import React, { useState } from 'react';
+import RequestDataFetcher from './RequestDataFetcher';
+import SampleDataFetcher from './SampleDataFetcher';
+import NetworkGraph from './EyeBallGraph';
+import { EyeballProps } from './Eyeball';
 
-export interface EyeballProps {
-    Matrix_Data:EyeballPropsRow[];
-}
+/**
+ *
+ * this mainly contains the main component in the tsx
+ */
+
+const CombinedNetworkGraph: React.FC = () => {
+    const [columnData, setData] = useState<any[]>([]);
+    const [EyeBallProps, setEyeBallProps] = useState<EyeballProps | null>(null);
+
+    return (
+        <div>
+            <RequestDataFetcher onDataFetched={setData} />
+            <SampleDataFetcher onDataFetched={setEyeBallProps} />
+            <NetworkGraph columnData={columnData} EyeballProps={EyeBallProps} />
+        </div>
+    );
+};
+
+export default CombinedNetworkGraph;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MatrixData } from './EyeballProps';
+import { MatrixData } from './Eyeball';
 
 /**
 
