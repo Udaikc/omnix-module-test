@@ -1,70 +1,50 @@
 import { useEffect, useState } from 'react';
 
-/**
- * @file RequestDataFetcher.tsx
- * @description Fetches data from Request.json, extracts relevant columns, and provides them to the parent component.
- */
-
-/**
- * ColumnDetail interface.
- *
- * Defines the structure of a column detail object.
- *
- * @interface ColumnDetail
- * @property {string} id - The ID of the column.
- * @property {string} displayName - The display name of the column.
- */
 interface ColumnDetail {
     id: string;
     displayName: string;
 }
 
-/**
- * RequestDataFetcherProps interface.
- *
- * Defines the props for the RequestDataFetcher component.
- *
- * @interface RequestDataFetcherProps
- * @property {function} onDataFetched - Callback function to pass the fetched and filtered column details to the parent component.
- */
-interface RequestDataFetcherProps {
-    onDataFetched: (data: ColumnDetail[]) => void;
+interface RequestJson {
+    columnDetails: ColumnDetail[];
 }
 
-/**
- * RequestDataFetcher component.
- *
- * Fetches data from the `/Request.json` file, filters the `columnDetails` array to include only
- * specified columns, and passes the filtered data to the parent component using the `onDataFetched`
- * callback. This component does not render any UI.
- *
- * @component
- * @param {RequestDataFetcherProps} props - The component props.
- * @returns {null} Returns null as this component does not render any UI.
- */
+interface RequestDataFetcherProps {
+    onDataFetched: (data: Record<string, string>) => void;
+}
+
 const RequestDataFetcher: React.FC<RequestDataFetcherProps> = ({ onDataFetched }) => {
-    /**
-     * State to hold the fetched and filtered column details.
-     *
-     * @type {[ColumnDetail[], React.Dispatch<React.SetStateAction<ColumnDetail[]>>]}
-     */
-    const [columnDetails, setColumnDetails] = useState<ColumnDetail[]>([]);
+    const [columnDetails, setColumnDetails] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        fetch('/Request.json')
-            .then(response => response.json())
-            .then(data => {
-                const relevantColumns = data.columnDetails.filter((item: ColumnDetail) =>
-                    ['host', 'appId', 'serverPort', 'serverOctets', 'hostGroupB', 'geoLocation'].includes(item.id)
-                );
-                console.log(relevantColumns);
+        const fetchData = async () => {
+            try {
+                const response = await fetch('/Request.json');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                const data: RequestJson = await response.json();
+
+                // Convert array to an object { "appId": "Application ID", ... }
+                const relevantColumns = data.columnDetails.reduce((acc, item) => {
+                    if (['host', 'appId', 'serverPort', 'serverOctets', 'hostGroupB', 'geoLocation'].includes(item.id)) {
+                        acc[item.id] = item.displayName;
+                    }
+                    return acc;
+                }, {} as Record<string, string>);
+
                 setColumnDetails(relevantColumns);
                 onDataFetched(relevantColumns);
-            })
-            .catch(error => console.error('Error fetching column details:', error));
+                console.log(relevantColumns);
+            } catch (error) {
+                console.error('Error fetching column details:', error);
+            }
+        };
+
+        fetchData();
     }, [onDataFetched]);
 
-    return null; // No UI needed, it just fetches data
+    return null;
 };
 
 export default RequestDataFetcher;

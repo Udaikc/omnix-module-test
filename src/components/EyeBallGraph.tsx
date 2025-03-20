@@ -1,75 +1,52 @@
-import React, { useEffect, useRef } from 'react';
+// NetworkGraph.tsx
+import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Network, type Node, type Edge } from 'vis-network/standalone';
 import { v4 as uuidv4 } from 'uuid';
 import 'vis-network/styles/vis-network.css';
+import NodeMenu from './NodeMenu'; // Separate component for node menu
 
-/**
- * @file EyeBallGraph.tsx
- * @description Renders a network graph using vis-network based on provided EyeballProps and columnData.
- */
-
-/**
- * NetworkGraphProps interface.
- *
- * Defines the props for the NetworkContainer component.
- *
- * @interface NetworkGraphProps
- * @property {object|null} EyeballProps - The data containing nodes to be rendered in the graph.
- * @property {Array} columnData - Additional column data used to display information about the central node.
- */
 interface NetworkGraphProps {
   EyeballProps: { ColumnData: any[] } | null;
-  columnData: any[];
+  columnData: Record<string, string>;
 }
 
-/**
- * NetworkContainer component.
- *
- * Renders a network graph using vis-network. It processes the EyeballProps data to create nodes and edges,
- * and uses columnData to display information about the central node.
- *
- * @component
- * @param {NetworkGraphProps} props - The component props.
- * @returns {JSX.Element} The rendered network graph.
- */
-const NetworkContainer: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
+const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
   const networkContainer = useRef<HTMLDivElement>(null);
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const networkRef = useRef<Network | null>(null);
+
+  const handleNodeClick = (nodeId: string) => {
+    if (!networkRef.current) return;
+
+    const positions = networkRef.current.getPositions([nodeId]);
+    const nodePosition = positions[nodeId];
+
+    if (nodePosition) {
+      const { x, y } = networkRef.current.canvasToDOM(nodePosition);
+      setSelectedNode(nodeId);
+      setMenuPosition({ x, y });
+    }
+  };
+
+  const closeMenu = () => setMenuPosition(null);
 
   useEffect(() => {
-    if (!EyeballProps || !EyeballProps.ColumnData) {
-      return;
-    }
+    if (!EyeballProps || !EyeballProps.ColumnData) return;
 
     const nodes = new DataSet<Node>([]);
     const edges = new DataSet<Edge>([]);
     const nodeMap: { [hostB: string]: string } = {};
 
-    EyeballProps.ColumnData.forEach((row) => {
-      // Mapping the provided data to the required format
-      const resolvedHostB = row.Server;
-      const hostB = row.Server; // Using server as hostB, as that's the closest equivalent.
-      const protocol = row.Service; // Using service as protocol
-      const serverPort = row.Port;
-      const ispName = row.Provider; // Using Provider as ispName
-      const ispOrg = row.Organization;
-      const ispNo = row.ASN;
-      const serverOctets = row.Bytes;
-
-      const nodeTitle = `Resolved Host: ${resolvedHostB}\n` +
-        `Protocol: ${protocol}\n` +
-        `Port: ${serverPort}\n` +
-        `ISP: ${ispName}\n` +
-        `ISP Org: ${ispOrg}\n` +
-        `ISP No: ${ispNo}\n` +
-        `Octets: ${serverOctets}`;
+    EyeballProps?.ColumnData.forEach((row) => {
+      const hostB = row.Server;
 
       if (!nodeMap[hostB]) {
         const uniqueId = uuidv4();
         nodeMap[hostB] = uniqueId;
         nodes.add({
           id: uniqueId,
-          label: resolvedHostB,
-          title: nodeTitle,
+          label: hostB,
           shape: 'circularImage',
           image: '/server.png',
           size: 20,
@@ -82,7 +59,7 @@ const NetworkContainer: React.FC<NetworkGraphProps> = ({ EyeballProps, columnDat
 
     if (networkContainer.current) {
       const options = {
-        interaction: { navigationButtons: true, keyboard: true },
+        interaction: { navigationButtons: false, keyboard: false },
         physics: { enabled: true, solver: 'barnesHut' },
         nodes: {
           size: 50,
@@ -94,29 +71,52 @@ const NetworkContainer: React.FC<NetworkGraphProps> = ({ EyeballProps, columnDat
           color: { color: '#848484' },
         },
       };
-      const network = new Network(networkContainer.current, { nodes, edges }, options);
 
-      const columnTitle = `Host: HostA\n` +
-        `Application: ${columnData.find((item) => item.id === 'appId')?.displayName || 'N/A'}\n` +
-        `Server Port: ${columnData.find((item) => item.id === 'serverPort')?.displayName || 'N/A'}\n` +
-        `Volume: ${columnData.find((item) => item.id === 'serverOctets')?.displayName || 'N/A'}\n` +
-        `Host Group: ${columnData.find((item) => item.id === 'hostGroupB')?.displayName || 'N/A'}\n` +
-        `Geolocation: ${columnData.find((item) => item.id === 'geoLocation')?.displayName || 'N/A'}`;
+      networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
       nodes.add({
         id: 'hostA',
         label: 'hostA',
-        title: columnTitle,
         shape: 'circularImage',
         image: '/file_slide.png',
         size: 50,
         borderWidth: 2,
-        color: '#7b7b7b',
+        color: { border: 'red', background: '#7b7b7b' },
+      });
+
+      networkRef.current.on('click', (event: any) => {
+        if (event.nodes.length > 0) {
+          handleNodeClick(event.nodes[0]);
+        } else {
+          closeMenu();
+        }
       });
     }
-  }, [EyeballProps]);
+  }, [EyeballProps, columnData]);
 
-  return <div ref={networkContainer} style={{ height: '600px', width: '100%', backgroundColor: '#000000' }} />;
+  return (
+    <>
+      <div
+        ref={networkContainer}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          backgroundColor: '#000000',
+        }}
+      />
+
+      {menuPosition && (
+        <NodeMenu
+          position={menuPosition}
+          selectedNode={selectedNode}
+          onClose={closeMenu}
+        />
+      )}
+    </>
+  );
 };
 
-export default NetworkContainer;
+export default NetworkGraph;
