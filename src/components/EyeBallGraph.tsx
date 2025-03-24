@@ -3,7 +3,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Network, type Node, type Edge } from 'vis-network/standalone';
 import { v4 as uuidv4 } from 'uuid';
 import 'vis-network/styles/vis-network.css';
-import NodeMenu from './NodeMenu'; // Separate component for node menu
+import NodeMenu from './NodeMenu';
+import './styles/NetworkContainer.css' // Separate component for node menu
 
 interface NetworkGraphProps {
   EyeballProps: { ColumnData: any[] } | null;
@@ -39,27 +40,44 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     const nodeMap: { [hostB: string]: string } = {};
 
     EyeballProps?.ColumnData.forEach((row) => {
-      const hostB = row.Server;
+      const hostB = row.Server; // Using server as hostB, as that's the closest equivalent.
+      const protocol = row.Service; // Using service as protocol
+      const serverPort = row.Port;
+      const ispName = row.Provider; // Using Provider as ispName
+      const ispOrg = row.Organization;
+      const ispNo = row.ASN;
+      const serverOctets = row.Bytes;
+      const IsMalicious = row.IsMalicious === "true"; // Convert to boolean
+
+      const nodeTitle = `Resolved Host: ${hostB}\n` +
+        `Protocol: ${protocol}\n` +
+        `Port: ${serverPort}\n` +
+        `ISP: ${ispName}\n` +
+        `ISP Org: ${ispOrg}\n` +
+        `ISP No: ${ispNo}\n` +
+        `Octets: ${serverOctets}`;
 
       if (!nodeMap[hostB]) {
         const uniqueId = uuidv4();
         nodeMap[hostB] = uniqueId;
         nodes.add({
           id: uniqueId,
+          title: nodeTitle,
           label: hostB,
           shape: 'circularImage',
           image: '/server.png',
           size: 20,
           borderWidth: 2,
-          color: '#7b7b7b',
+          color: IsMalicious ? { border: 'red', background: '#7b7b7b' } : '#7b7b7b',
         });
         edges.add({ from: 'hostA', to: uniqueId });
       }
     });
 
+
     if (networkContainer.current) {
       const options = {
-        interaction: { navigationButtons: false, keyboard: false },
+        interaction: { navigationButtons: true, keyboard: true },
         physics: { enabled: true, solver: 'barnesHut' },
         nodes: {
           size: 50,
@@ -69,11 +87,24 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         },
         edges: {
           color: { color: '#848484' },
+          arrows: 'middle', // Adds arrows at the middle of edges
         },
       };
 
+
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
+
+      // Constructing the title string using columnData mappings
+      const hostATitle = `
+      Application: ${columnData.appId}
+      Geo Location: ${columnData.geoLocation}
+      Host Group: ${columnData.hostGroupB}
+      Volume Total: ${columnData.serverOctets}
+      Server Port: ${columnData.serverPort}
+`;
+
+      // Adding the 'hostA' node with detailed information
       nodes.add({
         id: 'hostA',
         label: 'hostA',
@@ -82,6 +113,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         size: 50,
         borderWidth: 2,
         color: { border: 'red', background: '#7b7b7b' },
+        title: hostATitle, // This will display the details on hover
       });
 
       networkRef.current.on('click', (event: any) => {
@@ -98,14 +130,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     <>
       <div
         ref={networkContainer}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          backgroundColor: '#000000',
-        }}
+        className='network-container'
       />
 
       {menuPosition && (
