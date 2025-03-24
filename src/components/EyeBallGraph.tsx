@@ -1,22 +1,48 @@
-// NetworkGraph.tsx
+/**
+ * NetworkGraph Component
+ *
+ * This component visualizes network data using the vis-network library.
+ * It displays nodes and edges, highlighting malicious nodes and dynamically adjusting edge widths.
+ *
+ * @module NetworkGraph
+ */
+
 import React, { useEffect, useRef, useState } from 'react';
 import { DataSet, Network, type Node, type Edge } from 'vis-network/standalone';
 import { v4 as uuidv4 } from 'uuid';
 import 'vis-network/styles/vis-network.css';
 import NodeMenu from './NodeMenu';
-import './styles/NetworkContainer.css' // Separate component for node menu
+import './styles/NetworkContainer.css';
+
+/**
+ * Props for the NetworkGraph component
+ *
+ * @typedef {Object} NetworkGraphProps
+ * @property {{ ColumnData: any[] } | null} EyeballProps - Contains network data
+ * @property {Record<string, string>} columnData - Mapped column data
+ */
 
 interface NetworkGraphProps {
   EyeballProps: { ColumnData: any[] } | null;
   columnData: Record<string, string>;
 }
 
+/**
+ * NetworkGraph Component
+ *
+ * @param {NetworkGraphProps} props - The component props
+ * @returns {JSX.Element} A network graph visualization
+ */
 const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
   const networkContainer = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const networkRef = useRef<Network | null>(null);
 
+  /**
+   * Handles node click event to display node menu
+   * @param {string} nodeId - The ID of the clicked node
+   */
   const handleNodeClick = (nodeId: string) => {
     if (!networkRef.current) return;
 
@@ -30,6 +56,9 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     }
   };
 
+  /**
+   * Closes the node menu
+   */
   const closeMenu = () => setMenuPosition(null);
 
   useEffect(() => {
@@ -39,7 +68,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     const edges = new DataSet<Edge>([]);
     const nodeMap: { [hostB: string]: string } = {};
 
-    EyeballProps?.ColumnData.forEach((row) => {
+    EyeballProps.ColumnData.forEach((row) => {
       const hostB = row.Server;
       const protocol = row.Service;
       const serverPort = row.Port;
@@ -79,12 +108,11 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         edges.add({
           from: 'hostA',
           to: uniqueId,
-          width: edgeWidth, // Dynamic edge width based on Bytes
-          color: { color: IsMalicious ? 'red' : 'green' }, // Set edge color to green
+          width: edgeWidth,
+          color: { color: IsMalicious ? 'red' : 'green' },
         });
       }
     });
-
 
     if (networkContainer.current) {
       const options = {
@@ -98,24 +126,23 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         },
         edges: {
           color: { color: '#848484' },
-          arrows: 'middle', // Adds arrows at the middle of edges
+          arrows: 'middle',
         },
       };
 
-
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
-
-      // Constructing the title string using columnData mappings
+      /**
+       * Constructs the title string using columnData mappings
+       */
       const hostATitle = `
-      Application: ${columnData.appId}
-      Geo Location: ${columnData.geoLocation}
-      Host Group: ${columnData.hostGroupB}
-      Volume Total: ${columnData.serverOctets}
-      Server Port: ${columnData.serverPort}
-`;
+      Application: ${columnData.appId}\n
+      Geo Location: ${columnData.geoLocation}\n
+      Host Group: ${columnData.hostGroupB}\n
+      Volume Total: ${columnData.serverOctets}\n
+      Server Port: ${columnData.serverPort}\n
+      `;
 
-      // Adding the 'hostA' node with detailed information
       nodes.add({
         id: 'hostA',
         label: 'hostA',
@@ -124,7 +151,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         size: 50,
         borderWidth: 2,
         color: { border: 'red', background: '#7b7b7b' },
-        title: hostATitle, // This will display the details on hover
+        title: hostATitle,
       });
 
       networkRef.current.on('click', (event: any) => {
@@ -139,17 +166,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
   return (
     <>
-      <div
-        ref={networkContainer}
-        className='network-container'
-      />
+      <div ref={networkContainer} className='network-container' />
 
       {menuPosition && (
-        <NodeMenu
-          position={menuPosition}
-          selectedNode={selectedNode}
-          onClose={closeMenu}
-        />
+        <NodeMenu position={menuPosition} selectedNode={selectedNode} onClose={closeMenu} />
       )}
     </>
   );
