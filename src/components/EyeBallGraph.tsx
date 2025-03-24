@@ -40,14 +40,19 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     const nodeMap: { [hostB: string]: string } = {};
 
     EyeballProps?.ColumnData.forEach((row) => {
-      const hostB = row.Server; // Using server as hostB, as that's the closest equivalent.
-      const protocol = row.Service; // Using service as protocol
+      const hostB = row.Server;
+      const protocol = row.Service;
       const serverPort = row.Port;
-      const ispName = row.Provider; // Using Provider as ispName
+      const ispName = row.Provider;
       const ispOrg = row.Organization;
       const ispNo = row.ASN;
       const serverOctets = row.Bytes;
-      const IsMalicious = row.IsMalicious === "true"; // Convert to boolean
+      const IsMalicious = row.IsMalicious === "true";
+      const Bytes = row.Bytes;
+
+      const meanBytes = 30000000.78;
+      const meanBytes1 = 56301017.78; // Precomputed mean
+      const edgeWidth = Bytes > meanBytes ? Math.min(1 + (Bytes - meanBytes) / meanBytes, 5) : 1;
 
       const nodeTitle = `Resolved Host: ${hostB}\n` +
         `Protocol: ${protocol}\n` +
@@ -70,7 +75,13 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           borderWidth: 2,
           color: IsMalicious ? { border: 'red', background: '#7b7b7b' } : '#7b7b7b',
         });
-        edges.add({ from: 'hostA', to: uniqueId });
+
+        edges.add({
+          from: 'hostA',
+          to: uniqueId,
+          width: edgeWidth, // Dynamic edge width based on Bytes
+          color: { color: IsMalicious ? 'red' : 'green' }, // Set edge color to green
+        });
       }
     });
 
@@ -78,7 +89,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     if (networkContainer.current) {
       const options = {
         interaction: { navigationButtons: true, keyboard: true },
-        physics: { enabled: true, solver: 'barnesHut' },
+        physics: { enabled: true, solver: 'forceAtlas2Based' },
         nodes: {
           size: 50,
           borderWidth: 2,
