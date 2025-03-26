@@ -1,5 +1,5 @@
 /**
- * NetworkGraph Component
+ * EyeballGraph Component
  *
  * This component visualizes network data using the vis-network library.
  * It displays nodes and edges, highlighting malicious nodes and dynamically adjusting edge widths.
@@ -78,6 +78,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       const serverOctets = row.Bytes;
       const IsMalicious = row.IsMalicious === "true";
       const Bytes = row.Bytes;
+      const DataDirection = row.DataDirection;
 
       const meanBytes = 30000000.78;
       const meanBytes1 = 56301017.78; // Precomputed mean

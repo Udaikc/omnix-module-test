@@ -103,7 +103,13 @@ export interface EyeballPropsData {
    * The number of server octets.
    * @type {number}
    */
-  serverOctets: number;
+  serverOctet: number;
+
+  /**
+   * Direction of the Packets.
+   * @type {String}
+   */
+  DataDirection: String;
 }
 
 /**
