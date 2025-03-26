@@ -16,9 +16,9 @@ const NodeMenu: React.FC<NodeMenuProps> = ({ position, selectedNode, onClose }) 
             style={{
                 position: 'absolute',
                 left: `${Math.min(position.x, window.innerWidth - 200)}px`,
-                top: `${Math.min(position.y, window.innerHeight - 200)}px`,
+                top: `${Math.min(position.y, window.innerHeight - 100)}px`,
                 backgroundColor: 'white',
-                padding: '10px',
+                padding: '5px',
                 borderRadius: '5px',
                 boxShadow: '0px 4px 6px rgba(0, 0, 0, 0.1)',
                 zIndex: 1000,

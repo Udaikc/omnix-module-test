@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import RequestDataFetcher from './RequestDataFetcher';
 import SampleDataFetcher from './SampleDataFetcher';
-import NetworkContainer from './EyeBallGraph';
+import NetworkGraph from './EyeBallGraph';
 import { EyeballProps } from './Eyeball';
 
 /**
@@ -33,7 +33,7 @@ const EyeBallGraph: React.FC = () => {
         <div>
             <RequestDataFetcher onDataFetched={setData} />
             <SampleDataFetcher onDataFetched={setEyeBallProps} />
-            <NetworkContainer columnData={columnData} EyeballProps={eyeBallProps} />
+            <NetworkGraph columnData={columnData} EyeballProps={eyeBallProps} />
         </div>
     );
 };
