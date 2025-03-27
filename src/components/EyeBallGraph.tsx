@@ -107,7 +107,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
             width: edgeWidth,
             color: { color: edgeColor },
             arrows: { middle: true },
-            smooth: { enabled: true, type: "curvedCW", roundness: 0.2 },
+            smooth: { enabled: true, type: "line", roundness: 0.2 },
           },
           {
             from: uniqueId,
