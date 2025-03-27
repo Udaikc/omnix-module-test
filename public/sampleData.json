@@ -521,7 +521,7 @@
             "DataDirection": "ToHost"
         },
         {
-            "Server": "becopendns1.netscout.com",
+            "Server": "penbecodns1.netscout.com",
             "Type": "Server",
             "Scope": "Internal",
             "Service": "ICMP",

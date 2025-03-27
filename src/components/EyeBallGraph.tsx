@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
-import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
 import { v4 as uuidv4 } from "uuid";
+import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
 import "vis-network/styles/vis-network.css";
 import NodeMenu from "./NodeMenu";
 import "./styles/NetworkContainer.css";
@@ -18,10 +18,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
   const handleNodeClick = (nodeId: string) => {
     if (!networkRef.current) return;
-
     const positions = networkRef.current.getPositions([nodeId]);
     const nodePosition = positions[nodeId];
-
     if (nodePosition) {
       const { x, y } = networkRef.current.canvasToDOM(nodePosition);
       setSelectedNode(nodeId);
@@ -36,7 +34,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
     const nodes = new DataSet<Node>([]);
     const edges = new DataSet<Edge>([]);
-    const nodeMap: { [key: string]: string } = {};
+    const meanBytes = 30000000.78; // Used for edge width calculation
 
     EyeballProps.ColumnData.forEach((row) => {
       const hostB = row.Server;
@@ -52,43 +50,32 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets};`;
 
-      const meanBytes = 30000000.78;
+      const uniqueId = uuidv4();// Generate a truly unique ID
+
+      console.log(hostB + "-" + uniqueId);
+
+      nodes.add({
+        id: uniqueId,
+        title: nodeTitle,
+        label: hostB,
+        shape: "circularImage",
+        image: "/server.png",
+        size: 20,
+        borderWidth: 2,
+        color: IsMalicious ? { border: "red", background: "#7b7b7b" } : "#7b7b7b",
+      });
+
+      // Edge Width Calculation
       const edgeWidth = Bytes > meanBytes ? Math.min(1 + (Bytes - meanBytes) / meanBytes, 5) : 1;
+      const edgeColor = IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
 
-      let nodeId = hostB;
-      if (DataDirection === "ToClient") nodeId += " (Client)";
-      if (DataDirection === "ToHost") nodeId += " (Host)";
-
-      if (!nodeMap[nodeId]) {
-        const uniqueId = uuidv4();
-        nodeMap[nodeId] = uniqueId;
-
-        nodes.add({
-          id: uniqueId,
-          title: nodeTitle,
-          label: nodeId,
-          shape: "circularImage",
-          image: "/server.png",
-          size: 20,
-          borderWidth: 2,
-          color: IsMalicious ? { border: "red", background: "#7b7b7b" } : "#7b7b7b",
-        });
-      }
-
-      const uniqueId = nodeMap[nodeId];
-
-      // **Check if the node is malicious**
-      const nodeIsMalicious = IsMalicious || columnData.isHostAMalicious === "true";
-      const edgeColor = nodeIsMalicious ? "red" : "green"; // ✅ Red if malicious, else green
-
-      // Handling different DataDirection cases
       if (DataDirection === "ToClient") {
         edges.add({
           from: "hostA",
           to: uniqueId,
           width: edgeWidth,
-          color: { color: edgeColor }, // ✅ Edge color based on malicious status
-          arrows: { middle: true },
+          color: { color: edgeColor },
+          arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
         });
       } else if (DataDirection === "ToHost") {
         edges.add({
@@ -96,31 +83,29 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           to: "hostA",
           width: edgeWidth,
           color: { color: edgeColor },
-          arrows: { middle: true },
+          arrows: { middle: { enabled: true, scaleFactor: 1 } },
         });
       } else if (DataDirection === "Both") {
-        // Create two overlapping edges for bidirectional traffic
         edges.add([
           {
             from: "hostA",
             to: uniqueId,
             width: edgeWidth,
             color: { color: edgeColor },
-            arrows: { middle: true },
-            smooth: { enabled: true, type: "line", roundness: 0.2 },
+            arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
+            smooth: { enabled: true, type: "dynamic", roundness: 0.4 }, // Stronger CCW Curve
           },
           {
             from: uniqueId,
             to: "hostA",
             width: edgeWidth,
             color: { color: edgeColor },
-            arrows: { middle: true },
-            smooth: { enabled: true, type: "curvedCCW", roundness: 0.2 },
+            arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
+            smooth: { enabled: true, type: "dynamic", roundness: 0.4 }, // Stronger CW Curve
           },
         ]);
       }
     });
-
 
     if (networkContainer.current) {
       const options = {
@@ -133,10 +118,18 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           font: { color: "#FFFFFF", size: 14 },
         },
         edges: {
-          color: { color: "#848484" },
-          arrows: "middle",
+          arrows: {
+            middle: {
+              enabled: true,
+              scaleFactor: 1,
+              type: "arrow",
+              color: "#FFFFFF" // Custom arrow color
+            },
+          }
         },
       };
+
+      console.log("Total number of nodes:", nodes.length);
 
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
@@ -152,6 +145,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         color: { border: "red", background: "#7b7b7b" },
         title: hostATitle,
       });
+
+      console.log("Total number of nodes:", nodes.length);
 
       networkRef.current.on("click", (event: any) => {
         if (event.nodes.length > 0) {
