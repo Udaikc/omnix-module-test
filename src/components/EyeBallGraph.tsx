@@ -1,3 +1,18 @@
+/**
+ * NetworkGraph Component
+ *
+ * This component visualizes a network graph using vis-network, representing a host ("hostA") and its
+ * connections to various servers ("hostB") based on network traffic data. Each connection's attributes,
+ * such as protocol, port, ISP, and data direction, are displayed.
+ *
+ * @module NetworkGraph
+ * @requires react
+ * @requires uuidv4
+ * @requires vis-network/standalone
+ * @requires "vis-network/styles/vis-network.css"
+ * @requires NodeMenu
+ */
+
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
@@ -5,10 +20,25 @@ import "vis-network/styles/vis-network.css";
 import NodeMenu from "./NodeMenu";
 import "./styles/NetworkContainer.css";
 
+
 interface NetworkGraphProps {
   EyeballProps: { ColumnData: any[] } | null;
   columnData: Record<string, string>;
 }
+
+/**
+ * Props for NetworkGraph Component
+ * @typedef {Object} NetworkGraphProps
+ * @property {{ ColumnData: any[] } | null} EyeballProps - Data containing network connections.
+ * @property {Record<string, string>} columnData - Metadata for "hostA", including application ID and malicious status.
+ */
+
+/**
+ * NetworkGraph React Functional Component
+ *
+ * @param {NetworkGraphProps} props - Component properties.
+ * @returns {JSX.Element} The network graph visualization.
+ */
 
 const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
   const networkContainer = useRef<HTMLDivElement>(null);
@@ -17,6 +47,15 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
   const [investigationTarget, setInvestigationTarget] = useState<string | null>(null);
   const networkRef = useRef<Network | null>(null);
   const nodeHostMap = useRef<Record<string, string>>({}); // Maps node IDs to HostB values
+
+
+  /**
+   * Handles node click event.
+   * Opens a menu with investigation options for a selected node.
+   *
+   * @param {string} nodeId - ID of the clicked node.
+   */
+
 
   const handleNodeClick = (nodeId: string) => {
     if (!networkRef.current) return;
@@ -37,6 +76,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       setInvestigationTarget(targetLabel);
     }
   };
+
+  /**
+   * Closes the node menu.
+   */
 
   const closeMenu = () => {
     setMenuPosition(null);
@@ -61,6 +104,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       const IsMalicious = row.IsMalicious === "true";
       const Bytes = row.Bytes;
       const DataDirection = row.DataDirection;
+
+  /**
+   * Took the details from the Row iteration of the HostB array informatio.
+   */
 
       const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets};`;
 
