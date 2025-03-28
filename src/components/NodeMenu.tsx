@@ -1,15 +1,45 @@
 import React from 'react';
 import './styles/NodeMenu.css';
 
+
+/**
+ * Props for the NodeMenu component.
+ */
+
 interface NodeMenuProps {
+
+    /** Position of the menu (x, y coordinates). */
+
     position: { x: number; y: number };
+
+    /** The currently selected node ID or label. */
+
     selectedNode: string | null;
+
+     /** The investigation target related to the selected node. */
+
     investigationTarget: string | null;
+
+     /** Function to close the node menu. */
+
     onClose: () => void;
 }
 
+/**
+ * A context menu component that appears when a node is clicked in the network graph.
+ *
+ * @component
+ * @param {NodeMenuProps} props - The props for the NodeMenu component.
+ * @returns {JSX.Element | null} The rendered NodeMenu component or null if no node is selected.
+ */
+
 const NodeMenu: React.FC<NodeMenuProps> = ({ position, selectedNode, investigationTarget, onClose }) => {
     if (!selectedNode) return null;
+    /**
+     * Handles clicks on the menu links.
+     *
+     * @param {React.MouseEvent<HTMLAnchorElement>} event - The click event.
+     */
 
     const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault(); // Prevent default link behavior
