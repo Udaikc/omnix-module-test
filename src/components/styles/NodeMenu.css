@@ -1,10 +1,22 @@
-.button {
-    font-size: 10px;
-    padding: 0px;
-    height: 25px;
-    width: 100%;
-    border: none;
-    background-color: #ffffff;
-    cursor: pointer;
-    text-align: left;
-  }
+.link {
+  display: block;
+  padding: 5px;
+  text-decoration: none;
+  color: black; /* Ensures the links are black */
+  cursor: pointer;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+.node-menu {
+  padding: 5px;
+  border-radius: 5px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.separator {
+  margin: 2px 0;
+}
+
