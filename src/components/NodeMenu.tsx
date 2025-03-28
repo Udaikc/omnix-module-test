@@ -72,11 +72,11 @@ const NodeMenu: React.FC<NodeMenuProps> = ({ position, selectedNode, investigati
                         Investigation Host
                     </a>
                     <hr className="separator" />
-                    <a href={`#session-analysis-${selectedNode}`} className="link" onClick={handleLinkClick}>
+                    <a href={`#investigation-${selectedNode} - #hostA- ${investigationTarget}`} className="link" onClick={handleLinkClick}>
                         Launch Session Analysis
                     </a>
                     <hr className="separator" />
-                    <a href={`#packet-analysis-${selectedNode}`} className="link" onClick={handleLinkClick}>
+                    <a href={`#investigation-${selectedNode} - #hostA- ${investigationTarget}`} className="link" onClick={handleLinkClick}>
                         Launch Packet Analysis
                     </a>
                 </>
