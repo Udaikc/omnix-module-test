@@ -1,0 +1,66 @@
+const handleNodeClick = (nodeId: string) => {
+  if (!networkRef.current) return;
+
+  // Reset all node colors and edges
+  const allNodes = networkRef.current.body.data.nodes.get();
+  const allEdges = networkRef.current.body.data.edges.get();
+
+  // Set all nodes to default color
+  allNodes.forEach((node) => {
+    networkRef.current.body.data.nodes.update({
+      id: node.id,
+      color: node.id === "hostA" ? { border: "red", background: "#7b7b7b" } : "#7b7b7b",
+      borderWidth: 2,
+    });
+  });
+
+  // Set all edges to default color
+  allEdges.forEach((edge) => {
+    networkRef.current.body.data.edges.update({
+      id: edge.id,
+      color: { color: edge.color === "red" ? "red" : "green" }, // Reset edge color based on its original value
+    });
+  });
+
+  let targetLabel = nodeId; // Default to node ID
+  if (nodeId === "hostA") {
+    targetLabel = `Investigate HostA - ${columnData.appId}`; // Use HostA's application ID
+  } else {
+    targetLabel = nodeHostMap.current[nodeId] || nodeId; // Use HostB if available
+  }
+
+  // Get positions of the selected node
+  const positions = networkRef.current.getPositions([nodeId]);
+  const nodePosition = positions[nodeId];
+
+  if (nodePosition) {
+    const { x, y } = networkRef.current.canvasToDOM(nodePosition);
+    setSelectedNode(targetLabel);
+    setMenuPosition({ x, y });
+    setInvestigationTarget(targetLabel);
+  }
+
+  // Highlight the clicked node border in cyan
+  networkRef.current.body.data.nodes.update({
+    id: nodeId,
+    color: { border: "cyan", background: "#7b7b7b" },
+    borderWidth: 4, // Increase the border width for emphasis
+  });
+
+  // Highlight connected edges to HostA or to the clicked node in cyan
+  const connectedEdges = networkRef.current.getEdges(nodeId);
+  connectedEdges.forEach((edgeId) => {
+    networkRef.current.body.data.edges.update({
+      id: edgeId,
+      color: { color: "cyan" }, // Change edge color to cyan
+    });
+  });
+
+  // Highlight HostA node in cyan if connected
+  if (nodeId !== "hostA") {
+    networkRef.current.body.data.nodes.update({
+      id: "hostA",
+      color: { border: "cyan", background: "#7b7b7b" },
+    });
+  }
+};
