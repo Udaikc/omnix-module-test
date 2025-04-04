@@ -40,7 +40,7 @@ const SampleDataFetcher: React.FC<SampleDataFetcherProps> = ({ onDataFetched }) 
     fetch('/sampleData.json')
       .then(response => response.json())
       .then((data: EyeballProps) => {
-        console.log(data);
+
         setColumnData(data);
         onDataFetched(data);
       })
