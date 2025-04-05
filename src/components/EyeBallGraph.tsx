@@ -14,32 +14,45 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
   const networkContainer = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [investigationTarget, setInvestigationTarget] = useState<string | null>(null);
+  const [investigationTarget, setInvestigationTarget] = useState<any | null>(null); // Store HostA details
   const networkRef = useRef<Network | null>(null);
-  const nodeHostMap = useRef<Record<string, any>>({}); // Store node details, e.g., { uniqueId: nodeDetails }
+  const nodeHostMap = useRef<Record<string, any>>({}); // Store node details
 
   // Method to add node details to nodeHostMap
   const addNodeDetails = (uniqueId: string, details: any) => {
-    nodeHostMap.current[uniqueId] = details;
+    if (!nodeHostMap.current[uniqueId]) {
+      nodeHostMap.current[uniqueId] = details;
+    }
   };
 
   // Method to get node details by uniqueId
   const getNodeDetailsById = (uniqueId: string) => {
-    console.log(nodeHostMap.current[uniqueId]);
-    return nodeHostMap.current[uniqueId] || null;
+    const nodeDetails = nodeHostMap.current[uniqueId];
+    if (nodeDetails) {
+      return nodeDetails;
+    }
+    return null;
   };
 
-  const handleNodeClick = (serverData: any) => {
+  // Handle node click to display the menu and pass the details to NodeMenu
+  const handleNodeClick = (uniqueId: string) => {
     if (!networkRef.current) return;
 
     // Get the position of the selected node for menu placement
-    const positions = networkRef.current.getPositions([serverData.Server]);
-    const nodePosition = positions[serverData.Server];
+    const positions = networkRef.current.getPositions([uniqueId]);
+    const nodePosition = positions[uniqueId];
     if (nodePosition) {
       const { x, y } = networkRef.current.canvasToDOM(nodePosition);
+
+      const details = getNodeDetailsById(uniqueId); // Retrieve the details
+
+
+      if (details) {
+        setSelectedNode(details.hostB); // Set the server as the selected node (server is the 'hostB' field)
+      }
+
       setMenuPosition({ x, y }); // Set the menu position
-      setSelectedNode(serverData.Server); // Set the current node as selected
-      setInvestigationTarget(serverData.Server); // Set the investigation target
+      setInvestigationTarget(details); // Set the HostA details as investigation target
     }
   };
 
@@ -68,9 +81,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       const DataDirection = row.DataDirection;
       const scope = row.Scope;
 
-
       const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets};`;
-
 
       const uniqueId = uuidv4();
 
@@ -161,8 +172,20 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           `Application: ${columnData.appId}\nGeoLocation: ${columnData.geoLocation}\nHost Group: ${columnData.hostGroupB}\nServer Volume: ${columnData.serverOctets}\nServer Port: ${columnData.serverPort}`, // Display all details in the tooltip
       });
 
+      // Store HostA details
+      const hostADetails = {
+        hostB: "hostA",
+        // Add any details specific to HostA
+        appId: columnData.appId,
+        geoLocation: columnData.geoLocation,
+        hostGroupB: columnData.hostGroupB,
+        serverOctets: columnData.serverOctets,
+        serverPort: columnData.serverPort,
+      };
+      setInvestigationTarget(hostADetails); // Set HostA as the initial investigation target
 
       networkRef.current.on("click", (event: any) => {
+        console.log(event);
         if (event.nodes.length > 0) {
           handleNodeClick(event.nodes[0]);
         } else {
@@ -178,8 +201,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       {menuPosition && (
         <NodeMenu
           position={menuPosition}
-          selectedNode={selectedNode}
-          investigationTarget={investigationTarget}
+          selectedNode={selectedNode} // Send server (hostB) as selectedNode
+          investigationTarget={investigationTarget} // Send HostA details as investigation target
           onClose={closeMenu}
         />
       )}

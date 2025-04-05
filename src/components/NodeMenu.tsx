@@ -1,26 +1,20 @@
 import React from 'react';
 import './styles/NodeMenu.css';
 
-
 /**
  * Props for the NodeMenu component.
  */
-
 interface NodeMenuProps {
-
     /** Position of the menu (x, y coordinates). */
-
     position: { x: number; y: number };
 
     /** The currently selected node ID or label. */
-
     selectedNode: string | null;
 
-     /** The investigation target related to the selected node. */
+    /** The investigation target related to the selected node. */
+    investigationTarget: { hostB: string | null } | null;
 
-    investigationTarget: string | null;
-
-     /** Function to close the node menu. */
+    /** Function to close the node menu. */
 
     onClose: () => void;
 }
@@ -32,15 +26,14 @@ interface NodeMenuProps {
  * @param {NodeMenuProps} props - The props for the NodeMenu component.
  * @returns {JSX.Element | null} The rendered NodeMenu component or null if no node is selected.
  */
-
 const NodeMenu: React.FC<NodeMenuProps> = ({ position, selectedNode, investigationTarget, onClose }) => {
-    if (!selectedNode) return null;
+    if (!selectedNode) return null;  // Return nothing if no node is selected
+
     /**
      * Handles clicks on the menu links.
      *
      * @param {React.MouseEvent<HTMLAnchorElement>} event - The click event.
      */
-
     const handleLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
         event.preventDefault(); // Prevent default link behavior
         const href = event.currentTarget.getAttribute('href');
@@ -98,15 +91,20 @@ const NodeMenu: React.FC<NodeMenuProps> = ({ position, selectedNode, investigati
                         Show Detection
                     </a>
                     <hr className="separator" />
-                    <a href={`#investigation-${selectedNode} - #hostA- ${investigationTarget}`} className="link" onClick={handleLinkClick}>
-                        Investigation Host
-                    </a>
+                    {/* Check if investigationTarget exists and use optional chaining */}
+                    {investigationTarget ? (
+                        <a href={`#investigation-${investigationTarget.hostB || 'N/A'}`} className="link" onClick={handleLinkClick}>
+                            Investigation Host: {investigationTarget.hostB || 'N/A'}
+                        </a>
+                    ) : (
+                        <p>No investigation target available</p>
+                    )}
                     <hr className="separator" />
-                    <a href={`#investigation-${selectedNode} - #hostA- ${investigationTarget}`} className="link" onClick={handleLinkClick}>
+                    <a href={`#session-analysis-${selectedNode}`} className="link" onClick={handleLinkClick}>
                         Launch Session Analysis
                     </a>
                     <hr className="separator" />
-                    <a href={`#investigation-${selectedNode} - #hostA- ${investigationTarget}`} className="link" onClick={handleLinkClick}>
+                    <a href={`#packet-analysis-${selectedNode}`} className="link" onClick={handleLinkClick}>
                         Launch Packet Analysis
                     </a>
                 </>

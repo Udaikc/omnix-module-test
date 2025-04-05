@@ -35,7 +35,7 @@ const RequestDataFetcher: React.FC<RequestDataFetcherProps> = ({ onDataFetched }
 
                 setColumnDetails(relevantColumns);
                 onDataFetched(relevantColumns);
-                console.log(relevantColumns);
+
             } catch (error) {
                 console.error('Error fetching column details:', error);
             }
