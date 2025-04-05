@@ -36,16 +36,16 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
   // Handle node click to display the menu and pass the details to NodeMenu
   const handleNodeClick = (uniqueId: string) => {
-    if (!networkRef.current) return;
+    const network = networkRef.current;
+    if (!network) return;
 
     // Get the position of the selected node for menu placement
-    const positions = networkRef.current.getPositions([uniqueId]);
+    const positions = network.getPositions([uniqueId]);
     const nodePosition = positions[uniqueId];
     if (nodePosition) {
-      const { x, y } = networkRef.current.canvasToDOM(nodePosition);
+      const { x, y } = network.canvasToDOM(nodePosition);
 
       const details = getNodeDetailsById(uniqueId); // Retrieve the details
-
 
       if (details) {
         setSelectedNode(details.hostB); // Set the server as the selected node (server is the 'hostB' field)
@@ -53,6 +53,24 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       setMenuPosition({ x, y }); // Set the menu position
       setInvestigationTarget(details); // Set the HostA details as investigation target
+
+      // Update the clicked node's border color to cyan (without overwriting entire node data)
+      network.body.data.nodes.update([
+        { id: uniqueId, borderWidth: 4, color: { border: 'cyan', background: '#7b7b7b' } },
+      ]);
+
+      // Update the connected edges to cyan (without overwriting entire edge data)
+      network.getConnectedEdges(uniqueId).forEach((edgeId) => {
+        network.body.data.edges.update({
+          id: edgeId,
+          color: { color: 'cyan' },
+        });
+      });
+
+      // Update the hostA node's border to cyan (without overwriting other nodes)
+      network.body.data.nodes.update([
+        { id: 'hostA', borderWidth: 4, color: { border: 'cyan', background: '#7b7b7b' } },
+      ]);
     }
   };
 
@@ -185,7 +203,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       setInvestigationTarget(hostADetails); // Set HostA as the initial investigation target
 
       networkRef.current.on("click", (event: any) => {
-        console.log(event);
+        console.log(event.nodes);
         if (event.nodes.length > 0) {
           handleNodeClick(event.nodes[0]);
         } else {
@@ -203,6 +221,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           position={menuPosition}
           selectedNode={selectedNode} // Send server (hostB) as selectedNode
           investigationTarget={investigationTarget} // Send HostA details as investigation target
+          nodeId={selectedNode} // Send the clicked node's ID
+          nodeDetails={investigationTarget} // Send the node details to be displayed
           onClose={closeMenu}
         />
       )}
