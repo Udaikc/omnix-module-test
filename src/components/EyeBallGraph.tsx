@@ -34,10 +34,46 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     return null;
   };
 
+  const resetStyling = () => {
+    const network = networkRef.current;
+    if (!network) return;
+
+    // Reset all nodes
+    network.body.data.nodes.forEach((node: any) => {
+      const originalDetails = getNodeDetailsById(node.id);
+      const isMalicious = originalDetails?.IsMalicious === true;
+
+      network.body.data.nodes.update({
+        id: node.id,
+        borderWidth: 2,
+        color: isMalicious
+          ? { border: "red", background: "#7b7b7b" }
+          : "#7b7b7b", // this matches your existing condition
+      });
+    });
+
+
+
+    // Reset all edges
+    network.body.data.edges.forEach((edge: any) => {
+      const fromDetails = getNodeDetailsById(edge.from);
+      const toDetails = getNodeDetailsById(edge.to);
+      const isEitherMalicious =
+        fromDetails?.IsMalicious === true || toDetails?.IsMalicious === true || columnData.isHostAMalicious === "true";
+
+      network.body.data.edges.update({
+        id: edge.id,
+        color: { color: isEitherMalicious ? "red" : "green" },
+      });
+    });
+  };
+
   // Handle node click to display the menu and pass the details to NodeMenu
   const handleNodeClick = (uniqueId: string) => {
     const network = networkRef.current;
     if (!network) return;
+
+    resetStyling();
 
     // Get the position of the selected node for menu placement
     const positions = network.getPositions([uniqueId]);
@@ -207,7 +243,9 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         if (event.nodes.length > 0) {
           handleNodeClick(event.nodes[0]);
         } else {
-          closeMenu();
+          resetStyling();     // Reset node and edge styles
+          closeMenu();        // Close context menu if open
+          setSelectedNode(null); // Clear selected node
         }
       });
     }
@@ -221,8 +259,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           position={menuPosition}
           selectedNode={selectedNode} // Send server (hostB) as selectedNode
           investigationTarget={investigationTarget} // Send HostA details as investigation target
-          nodeId={selectedNode} // Send the clicked node's ID
-          nodeDetails={investigationTarget} // Send the node details to be displayed
           onClose={closeMenu}
         />
       )}
