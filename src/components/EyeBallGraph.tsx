@@ -50,6 +50,13 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           ? { border: "red", background: "#7b7b7b" }
           : "#7b7b7b", // this matches your existing condition
       });
+
+      network.body.data.nodes.update({
+        id: "hostA",
+        borderWidth: 2,
+        color:
+          { border: "red", background: "#7b7b7b" }
+      });
     });
 
 
@@ -73,42 +80,57 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     const network = networkRef.current;
     if (!network) return;
 
-    resetStyling();
+    // If the clicked node is already selected, deselect it
+    if (selectedNode === uniqueId) {
+      resetStyling();
+      closeMenu();
+      setSelectedNode(null);
+      return;
+    }
 
-    // Get the position of the selected node for menu placement
+    resetStyling(); // Reset styles before applying new highlights
+
     const positions = network.getPositions([uniqueId]);
     const nodePosition = positions[uniqueId];
     if (nodePosition) {
       const { x, y } = network.canvasToDOM(nodePosition);
-
-      const details = getNodeDetailsById(uniqueId); // Retrieve the details
+      const details = getNodeDetailsById(uniqueId);
 
       if (details) {
-        setSelectedNode(details.hostB); // Set the server as the selected node (server is the 'hostB' field)
+        setSelectedNode(uniqueId); // Store the unique node ID here now
       }
 
-      setMenuPosition({ x, y }); // Set the menu position
-      setInvestigationTarget(details); // Set the HostA details as investigation target
+      setMenuPosition({ x, y });
+      setInvestigationTarget(details);
 
-      // Update the clicked node's border color to cyan (without overwriting entire node data)
+      // Highlight clicked node
       network.body.data.nodes.update([
-        { id: uniqueId, borderWidth: 4, color: { border: 'cyan', background: '#7b7b7b' } },
+        {
+          id: uniqueId,
+          borderWidth: 4,
+          color: { border: "cyan", background: "#7b7b7b" },
+        },
       ]);
 
-      // Update the connected edges to cyan (without overwriting entire edge data)
+      // Highlight connected edges
       network.getConnectedEdges(uniqueId).forEach((edgeId) => {
         network.body.data.edges.update({
           id: edgeId,
-          color: { color: 'cyan' },
+          color: { color: "cyan" },
         });
       });
 
-      // Update the hostA node's border to cyan (without overwriting other nodes)
+      // Highlight hostA
       network.body.data.nodes.update([
-        { id: 'hostA', borderWidth: 4, color: { border: 'cyan', background: '#7b7b7b' } },
+        {
+          id: "hostA",
+          borderWidth: 4,
+          color: { border: "cyan", background: "#7b7b7b" },
+        },
       ]);
     }
   };
+
 
   const closeMenu = () => {
     setMenuPosition(null);
@@ -239,15 +261,15 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       setInvestigationTarget(hostADetails); // Set HostA as the initial investigation target
 
       networkRef.current.on("click", (event: any) => {
-        console.log(event.nodes);
         if (event.nodes.length > 0) {
-          handleNodeClick(event.nodes[0]);
+          handleNodeClick(event.nodes[0]); // use ID directly
         } else {
-          resetStyling();     // Reset node and edge styles
-          closeMenu();        // Close context menu if open
-          setSelectedNode(null); // Clear selected node
+          resetStyling();
+          closeMenu();
+          setSelectedNode(null);
         }
       });
+
     }
   }, [EyeballProps, columnData]);
 
