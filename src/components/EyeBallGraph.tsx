@@ -1,23 +1,35 @@
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
+import { DataSet, Network, Node, Edge } from "vis-network/standalone";
 import "vis-network/styles/vis-network.css";
 import NodeMenu from "./NodeMenu";
 import "./styles/NetworkContainer.css";
 
+import { addNodeDetails, resetStyling } from "./utils/networkUtils";
+import { createNode, createEdges } from "./utils/graphBuilder";
+import { handleNodeClick } from "./utils/handleNodeClick";
+
 interface NetworkGraphProps {
   EyeballProps: { ColumnData: any[] } | null;
-  columnData: Record<string, string>;
+  columnData: {
+    appId: string;
+    geoLocation: string;
+    hostGroupB: string;
+    serverOctets: string;
+    serverPort: string;
+    isHostAMalicious?: string; // optional property
+  };
 }
 
-const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
+const EyeballGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
   const networkContainer = useRef<HTMLDivElement>(null);
-  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const [investigationTarget, setInvestigationTarget] = useState<any | null>(null);
   const networkRef = useRef<Network | null>(null);
   const nodeHostMap = useRef<Record<string, any>>({});
   const selectedNodeRef = useRef<string | null>(null);
+
+  const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
+<<<<<<< HEAD
 
   const addNodeDetails = (uniqueId: string, details: any) => {
     if (!nodeHostMap.current[uniqueId]) {
@@ -138,14 +150,33 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     }
   };
 
+=======
+  const [investigationTarget, setInvestigationTarget] = useState<any | null>(null);
+>>>>>>> hostA
 
   const closeMenu = () => {
     setMenuPosition(null);
     setInvestigationTarget(null);
   };
 
+  const handleNodeClickWrapper = (uniqueId: string) => {
+    const network = networkRef.current;
+    if (network) {
+      handleNodeClick({
+        uniqueId,
+        network: network,
+        nodeHostMap: nodeHostMap.current,
+        columnData,
+        setMenuPosition,
+        setInvestigationTarget,
+        setSelectedNode,
+        selectedNodeRef,
+      });
+    }
+  };
+
   useEffect(() => {
-    if (!EyeballProps || !EyeballProps.ColumnData) return;
+    if (!EyeballProps?.ColumnData) return;
 
     const nodes = new DataSet<Node>([]);
     const edges = new DataSet<Edge>([]);
@@ -158,15 +189,13 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         Provider: ispName,
         Organization: ispOrg,
         ASN: ispNo,
-        Bytes: serverOctets,
-        IsMalicious,
         Bytes,
+        IsMalicious,
         DataDirection,
         Scope: scope,
       } = row;
 
       const uniqueId = uuidv4();
-
       const nodeDetails = {
         hostB,
         protocol,
@@ -174,68 +203,24 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         ispName,
         ispOrg,
         ispNo,
-        serverOctets,
+        serverOctets: Bytes,
         IsMalicious: IsMalicious === "true",
         DataDirection,
         scope,
       };
 
-      addNodeDetails(uniqueId, nodeDetails);
+      addNodeDetails(nodeHostMap.current, uniqueId, nodeDetails);
 
-      const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets}`;
+      const node = createNode(uniqueId, nodeDetails);
+      const edgeList = createEdges(
+        uniqueId,
+        Bytes,
+        DataDirection,
+        nodeDetails.IsMalicious || columnData.isHostAMalicious === "true"
+      );
 
-      nodes.add({
-        id: uniqueId,
-        label: hostB,
-        title: nodeTitle,
-        shape: "circularImage",
-        image: scope === "External" ? "/external_server.png" : "/server.png",
-        size: 20,
-        borderWidth: 2,
-        color: nodeDetails.IsMalicious
-          ? { border: "red", background: "#7b7b7b" }
-          : "#7b7b7b",
-      });
-
-      const edgeWidth = Bytes;
-      const edgeColor = nodeDetails.IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
-
-      const edgeConfig = {
-        from: DataDirection === "ToClient" ? "hostA" : uniqueId,
-        to: DataDirection === "ToClient" ? uniqueId : "hostA",
-        width: edgeWidth,
-        color: { color: edgeColor },
-        arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
-      };
-
-      // Apply the roundness to the edge when DataDirection is "Both"
-      if (DataDirection === "Both") {
-        const edgeConfigToClient = {
-          ...edgeConfig,
-          from: uniqueId,
-          to: "hostA",
-          smooth: {
-            type: "dynamic",  // smooth curve
-            roundness: 0.5,       // Adjust this value to control the roundness
-          },
-        };
-
-        const edgeConfigFromClient = {
-          ...edgeConfig,
-          from: "hostA",
-          to: uniqueId,
-          smooth: {
-            type: "dynamic",  // smooth curve
-            roundness: 0.5,       // Adjust this value to control the roundness
-          },
-        };
-
-        // Add both edges with dynamic roundness
-        edges.add([edgeConfigToClient, edgeConfigFromClient]);
-      } else {
-        // Add the edge if the direction is not "Both"
-        edges.add(edgeConfig);
-      }
+      nodes.add(node);
+      edges.add(edgeList);
     });
 
     if (networkContainer.current) {
@@ -246,7 +231,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
-      nodes.add({
+      const hostANode: Node = {
         id: "hostA",
         label: "hostA",
         shape: "circularImage",
@@ -254,9 +239,14 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         size: 50,
         borderWidth: 2,
         color: { border: "red", background: "#7b7b7b" },
-        title: `Application: ${columnData.appId}\nGeoLocation: ${columnData.geoLocation}\nHost Group: ${columnData.hostGroupB}\nServer Volume: ${columnData.serverOctets}\nServer Port: ${columnData.serverPort}`,
-      });
+        title: `Application: ${columnData.appId}
+GeoLocation: ${columnData.geoLocation}
+Host Group: ${columnData.hostGroupB}
+Server Volume: ${columnData.serverOctets}
+Server Port: ${columnData.serverPort}`,
+      };
 
+      nodes.add(hostANode);
       setInvestigationTarget({
         hostB: "hostA",
         appId: columnData.appId,
@@ -269,13 +259,12 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       networkRef.current.on("click", (event: any) => {
         if (event.nodes.length > 0) {
           const clickedNodeId = event.nodes[0];
-          console.log(event.nodes);
           if (clickedNodeId === selectedNodeRef.current) {
-            resetStyling();
+            resetStyling(networkRef.current!, nodeHostMap.current, columnData);
             closeMenu();
             selectedNodeRef.current = null;
           } else {
-            handleNodeClick(clickedNodeId);
+            handleNodeClickWrapper(clickedNodeId);
           }
         } else {
           closeMenu();
@@ -288,7 +277,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
   return (
     <>
       <div ref={networkContainer} className="network-container" />
-      {menuPosition && (
+      {menuPosition && investigationTarget && (
         <NodeMenu
           position={menuPosition}
           selectedNode={selectedNode}
@@ -300,4 +289,4 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
   );
 };
 
-export default NetworkGraph;
+export default EyeballGraph;
