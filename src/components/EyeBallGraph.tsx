@@ -111,7 +111,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
     const nodes = new DataSet<Node>([]);
     const edges = new DataSet<Edge>([]);
-    const meanBytes = 30000000.78;
 
     EyeballProps.ColumnData.forEach((row) => {
       const {
@@ -123,7 +122,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         ASN: ispNo,
         Bytes: serverOctets,
         IsMalicious,
-        Bytes,
         DataDirection,
         Scope: scope,
       } = row;
@@ -160,24 +158,22 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           : "#7b7b7b",
       });
 
-      const edgeWidth = Bytes > meanBytes ? Math.min(1 + (Bytes - meanBytes) / meanBytes, 5) : 1;
       const edgeColor = nodeDetails.IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
-
-      const edgeConfig = {
-        from: DataDirection === "ToClient" ? "hostA" : uniqueId,
-        to: DataDirection === "ToClient" ? uniqueId : "hostA",
-        width: edgeWidth,
+      const edgeBase = {
+        width: serverOctets,
         color: { color: edgeColor },
         arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
       };
 
-      if (DataDirection === "Both") {
+      if (DataDirection === "ToClient") {
+        edges.add({ from: "hostA", to: uniqueId, ...edgeBase });
+      } else if (DataDirection === "ToHost") {
+        edges.add({ from: uniqueId, to: "hostA", ...edgeBase });
+      } else if (DataDirection === "Both") {
         edges.add([
-          { ...edgeConfig },
-          { ...edgeConfig, from: uniqueId, to: "hostA" },
+          { from: "hostA", to: uniqueId, ...edgeBase, smooth: { enabled: true, type: "dynamic", roundness: 0.4 } },
+          { from: uniqueId, to: "hostA", ...edgeBase, smooth: { enabled: true, type: "dynamic", roundness: 0.4 } },
         ]);
-      } else {
-        edges.add(edgeConfig);
       }
     });
 
@@ -220,7 +216,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
             handleNodeClick(clickedNodeId);
           }
         } else {
-
           closeMenu();
           selectedNodeRef.current = null;
         }
