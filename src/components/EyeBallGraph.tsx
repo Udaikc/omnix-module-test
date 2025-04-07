@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
+import { DataSet, Network, Node, Edge } from "vis-network/standalone";
 import "vis-network/styles/vis-network.css";
 import NodeMenu from "./NodeMenu";
 import "./styles/NetworkContainer.css";
@@ -17,6 +17,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
   const networkRef = useRef<Network | null>(null);
   const nodeHostMap = useRef<Record<string, any>>({});
   const selectedNodeRef = useRef<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
   const addNodeDetails = (uniqueId: string, details: any) => {
     if (!nodeHostMap.current[uniqueId]) {
@@ -61,7 +62,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       network.body.data.edges.update({
         id: edge.id,
         color: { color: isEitherMalicious ? "red" : "green" },
-        dash: false, // Ensuring solid lines
       });
     });
   };
@@ -77,9 +77,10 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     if (nodePosition) {
       const { x, y } = network.canvasToDOM(nodePosition);
       const details = getNodeDetailsById(uniqueId);
-      selectedNodeRef.current = details.hostB;
+      selectedNodeRef.current = uniqueId;
       setMenuPosition({ x, y });
       setInvestigationTarget(details);
+      setSelectedNode(details.hostB);
 
       network.body.data.nodes.update({
         id: uniqueId,
@@ -91,7 +92,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         network.body.data.edges.update({
           id: edgeId,
           color: { color: "cyan" },
-          dash: false, // Ensuring solid lines
         });
       });
 
@@ -124,6 +124,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         ASN: ispNo,
         Bytes: serverOctets,
         IsMalicious,
+        Bytes,
         DataDirection,
         Scope: scope,
       } = row;
@@ -147,7 +148,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets}`;
 
-      // Remove grouping based on scope (groups are removed)
       nodes.add({
         id: uniqueId,
         label: hostB,
@@ -161,23 +161,44 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           : "#7b7b7b",
       });
 
+      const edgeWidth = Bytes;
       const edgeColor = nodeDetails.IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
-      const edgeBase = {
-        width: serverOctets,
+
+      const edgeConfig = {
+        from: DataDirection === "ToClient" ? "hostA" : uniqueId,
+        to: DataDirection === "ToClient" ? uniqueId : "hostA",
+        width: edgeWidth,
         color: { color: edgeColor },
         arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
-        dash: false, // Ensure solid lines
       };
 
-      if (DataDirection === "ToClient") {
-        edges.add({ from: "hostA", to: uniqueId, ...edgeBase });
-      } else if (DataDirection === "ToHost") {
-        edges.add({ from: uniqueId, to: "hostA", ...edgeBase });
-      } else if (DataDirection === "Both") {
-        edges.add([
-          { from: "hostA", to: uniqueId, ...edgeBase, smooth: { enabled: true, type: "dynamic", roundness: 0.4 } },
-          { from: uniqueId, to: "hostA", ...edgeBase, smooth: { enabled: true, type: "dynamic", roundness: 0.4 } },
-        ]);
+      // Apply the roundness to the edge when DataDirection is "Both"
+      if (DataDirection === "Both") {
+        const edgeConfigToClient = {
+          ...edgeConfig,
+          from: uniqueId,
+          to: "hostA",
+          smooth: {
+            type: "dynamic",  // smooth curve
+            roundness: 0.5,       // Adjust this value to control the roundness
+          },
+        };
+
+        const edgeConfigFromClient = {
+          ...edgeConfig,
+          from: "hostA",
+          to: uniqueId,
+          smooth: {
+            type: "dynamic",  // smooth curve
+            roundness: 0.5,       // Adjust this value to control the roundness
+          },
+        };
+
+        // Add both edges with dynamic roundness
+        edges.add([edgeConfigToClient, edgeConfigFromClient]);
+      } else {
+        // Add the edge if the direction is not "Both"
+        edges.add(edgeConfig);
       }
     });
 
@@ -189,7 +210,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
 
-      // Adding hostA node (hostB)
       nodes.add({
         id: "hostA",
         label: "hostA",
@@ -234,7 +254,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       {menuPosition && (
         <NodeMenu
           position={menuPosition}
-          selectedNode={selectedNodeRef.current}
+          selectedNode={selectedNode}
           investigationTarget={investigationTarget}
           onClose={closeMenu}
         />
