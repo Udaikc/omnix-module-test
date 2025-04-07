@@ -122,6 +122,12 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
           color: { border: "cyan", background: "#7b7b7b" },
         });
 
+        network.body.data.nodes.update({
+          id: "hostA",
+          borderWidth: 4,
+          color: { border: "cyan", background: "#7b7b7b" },
+        });
+
         network.getConnectedEdges(uniqueId).forEach((edgeId) => {
           network.body.data.edges.update({
             id: edgeId,
