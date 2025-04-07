@@ -13,60 +13,50 @@ interface NetworkGraphProps {
 const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData }) => {
   const networkContainer = useRef<HTMLDivElement>(null);
   const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
-  const [selectedNode, setSelectedNode] = useState<string | null>(null);
-  const [investigationTarget, setInvestigationTarget] = useState<any | null>(null); // Store HostA details
+  const [investigationTarget, setInvestigationTarget] = useState<any | null>(null);
   const networkRef = useRef<Network | null>(null);
-  const nodeHostMap = useRef<Record<string, any>>({}); // Store node details
+  const nodeHostMap = useRef<Record<string, any>>({});
+  const selectedNodeRef = useRef<string | null>(null);
 
-  // Method to add node details to nodeHostMap
   const addNodeDetails = (uniqueId: string, details: any) => {
     if (!nodeHostMap.current[uniqueId]) {
       nodeHostMap.current[uniqueId] = details;
     }
   };
 
-  // Method to get node details by uniqueId
   const getNodeDetailsById = (uniqueId: string) => {
-    const nodeDetails = nodeHostMap.current[uniqueId];
-    if (nodeDetails) {
-      return nodeDetails;
-    }
-    return null;
+    return nodeHostMap.current[uniqueId] || null;
   };
 
   const resetStyling = () => {
     const network = networkRef.current;
     if (!network) return;
 
-    // Reset all nodes
     network.body.data.nodes.forEach((node: any) => {
       const originalDetails = getNodeDetailsById(node.id);
       const isMalicious = originalDetails?.IsMalicious === true;
-
       network.body.data.nodes.update({
         id: node.id,
         borderWidth: 2,
         color: isMalicious
           ? { border: "red", background: "#7b7b7b" }
-          : "#7b7b7b", // this matches your existing condition
-      });
-
-      network.body.data.nodes.update({
-        id: "hostA",
-        borderWidth: 2,
-        color:
-          { border: "red", background: "#7b7b7b" }
+          : "#7b7b7b",
       });
     });
 
+    network.body.data.nodes.update({
+      id: "hostA",
+      borderWidth: 2,
+      color: { border: "red", background: "#7b7b7b" },
+    });
 
-
-    // Reset all edges
     network.body.data.edges.forEach((edge: any) => {
       const fromDetails = getNodeDetailsById(edge.from);
       const toDetails = getNodeDetailsById(edge.to);
       const isEitherMalicious =
-        fromDetails?.IsMalicious === true || toDetails?.IsMalicious === true || columnData.isHostAMalicious === "true";
+        fromDetails?.IsMalicious === true ||
+        toDetails?.IsMalicious === true ||
+        columnData.isHostAMalicious === "true";
 
       network.body.data.edges.update({
         id: edge.id,
@@ -75,44 +65,27 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     });
   };
 
-  // Handle node click to display the menu and pass the details to NodeMenu
   const handleNodeClick = (uniqueId: string) => {
     const network = networkRef.current;
     if (!network) return;
 
-    // If the clicked node is already selected, deselect it
-    if (selectedNode === uniqueId) {
-      resetStyling();
-      closeMenu();
-      setSelectedNode(null);
-      return;
-    }
-
-    resetStyling(); // Reset styles before applying new highlights
+    resetStyling();
 
     const positions = network.getPositions([uniqueId]);
     const nodePosition = positions[uniqueId];
     if (nodePosition) {
       const { x, y } = network.canvasToDOM(nodePosition);
       const details = getNodeDetailsById(uniqueId);
-
-      if (details) {
-        setSelectedNode(uniqueId); // Store the unique node ID here now
-      }
-
+      selectedNodeRef.current = uniqueId;
       setMenuPosition({ x, y });
       setInvestigationTarget(details);
 
-      // Highlight clicked node
-      network.body.data.nodes.update([
-        {
-          id: uniqueId,
-          borderWidth: 4,
-          color: { border: "cyan", background: "#7b7b7b" },
-        },
-      ]);
+      network.body.data.nodes.update({
+        id: uniqueId,
+        borderWidth: 4,
+        color: { border: "cyan", background: "#7b7b7b" },
+      });
 
-      // Highlight connected edges
       network.getConnectedEdges(uniqueId).forEach((edgeId) => {
         network.body.data.edges.update({
           id: edgeId,
@@ -120,17 +93,13 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         });
       });
 
-      // Highlight hostA
-      network.body.data.nodes.update([
-        {
-          id: "hostA",
-          borderWidth: 4,
-          color: { border: "cyan", background: "#7b7b7b" },
-        },
-      ]);
+      network.body.data.nodes.update({
+        id: "hostA",
+        borderWidth: 4,
+        color: { border: "cyan", background: "#7b7b7b" },
+      });
     }
   };
-
 
   const closeMenu = () => {
     setMenuPosition(null);
@@ -145,23 +114,22 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     const meanBytes = 30000000.78;
 
     EyeballProps.ColumnData.forEach((row) => {
-      const hostB = row.Server;
-      const protocol = row.Service;
-      const serverPort = row.Port;
-      const ispName = row.Provider;
-      const ispOrg = row.Organization;
-      const ispNo = row.ASN;
-      const serverOctets = row.Bytes;
-      const IsMalicious = row.IsMalicious === "true";
-      const Bytes = row.Bytes;
-      const DataDirection = row.DataDirection;
-      const scope = row.Scope;
-
-      const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets};`;
+      const {
+        Server: hostB,
+        Service: protocol,
+        Port: serverPort,
+        Provider: ispName,
+        Organization: ispOrg,
+        ASN: ispNo,
+        Bytes: serverOctets,
+        IsMalicious,
+        Bytes,
+        DataDirection,
+        Scope: scope,
+      } = row;
 
       const uniqueId = uuidv4();
 
-      // Store node details in the map
       const nodeDetails = {
         hostB,
         protocol,
@@ -170,11 +138,14 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         ispOrg,
         ispNo,
         serverOctets,
-        IsMalicious,
+        IsMalicious: IsMalicious === "true",
         DataDirection,
         scope,
       };
-      addNodeDetails(uniqueId, nodeDetails); // Add details to map
+
+      addNodeDetails(uniqueId, nodeDetails);
+
+      const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets}`;
 
       nodes.add({
         id: uniqueId,
@@ -184,47 +155,29 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         image: scope === "External" ? "/external_server.png" : "/server.png",
         size: 20,
         borderWidth: 2,
-        color: IsMalicious ? { border: "red", background: "#7b7b7b" } : "#7b7b7b",
+        color: nodeDetails.IsMalicious
+          ? { border: "red", background: "#7b7b7b" }
+          : "#7b7b7b",
       });
 
-      // Edge Width Calculation
       const edgeWidth = Bytes > meanBytes ? Math.min(1 + (Bytes - meanBytes) / meanBytes, 5) : 1;
-      const edgeColor = IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
+      const edgeColor = nodeDetails.IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
 
-      if (DataDirection === "ToClient") {
-        edges.add({
-          from: "hostA",
-          to: uniqueId,
-          width: edgeWidth,
-          color: { color: edgeColor },
-          arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
-        });
-      } else if (DataDirection === "ToHost") {
-        edges.add({
-          from: uniqueId,
-          to: "hostA",
-          width: edgeWidth,
-          color: { color: edgeColor },
-          arrows: { middle: { enabled: true, scaleFactor: 1 } },
-        });
-      } else if (DataDirection === "Both") {
-        edges.add([{
-          from: "hostA",
-          to: uniqueId,
-          width: edgeWidth,
-          color: { color: edgeColor },
-          arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
-          smooth: { enabled: true, type: "dynamic", roundness: 0.4 },
-        },
-        {
-          from: uniqueId,
-          to: "hostA",
-          width: edgeWidth,
-          color: { color: edgeColor },
-          arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
-          smooth: { enabled: true, type: "dynamic", roundness: 0.4 },
-        }
+      const edgeConfig = {
+        from: DataDirection === "ToClient" ? "hostA" : uniqueId,
+        to: DataDirection === "ToClient" ? uniqueId : "hostA",
+        width: edgeWidth,
+        color: { color: edgeColor },
+        arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
+      };
+
+      if (DataDirection === "Both") {
+        edges.add([
+          { ...edgeConfig },
+          { ...edgeConfig, from: uniqueId, to: "hostA" },
         ]);
+      } else {
+        edges.add(edgeConfig);
       }
     });
 
@@ -240,36 +193,38 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         id: "hostA",
         label: "hostA",
         shape: "circularImage",
-        image: "/file_slide.png", // You can update this image based on hostA type or other attributes if needed
+        image: "/file_slide.png",
         size: 50,
         borderWidth: 2,
-        color: { border: "red", background: "#7b7b7b" }, // You can customize the color based on status or other criteria
-        title:
-          `Application: ${columnData.appId}\nGeoLocation: ${columnData.geoLocation}\nHost Group: ${columnData.hostGroupB}\nServer Volume: ${columnData.serverOctets}\nServer Port: ${columnData.serverPort}`, // Display all details in the tooltip
+        color: { border: "red", background: "#7b7b7b" },
+        title: `Application: ${columnData.appId}\nGeoLocation: ${columnData.geoLocation}\nHost Group: ${columnData.hostGroupB}\nServer Volume: ${columnData.serverOctets}\nServer Port: ${columnData.serverPort}`,
       });
 
-      // Store HostA details
-      const hostADetails = {
+      setInvestigationTarget({
         hostB: "hostA",
-        // Add any details specific to HostA
         appId: columnData.appId,
         geoLocation: columnData.geoLocation,
         hostGroupB: columnData.hostGroupB,
         serverOctets: columnData.serverOctets,
         serverPort: columnData.serverPort,
-      };
-      setInvestigationTarget(hostADetails); // Set HostA as the initial investigation target
+      });
 
       networkRef.current.on("click", (event: any) => {
         if (event.nodes.length > 0) {
-          handleNodeClick(event.nodes[0]); // use ID directly
+          const clickedNodeId = event.nodes[0];
+          if (clickedNodeId === selectedNodeRef.current) {
+            resetStyling();
+            closeMenu();
+            selectedNodeRef.current = null;
+          } else {
+            handleNodeClick(clickedNodeId);
+          }
         } else {
-          resetStyling();
+
           closeMenu();
-          setSelectedNode(null);
+          selectedNodeRef.current = null;
         }
       });
-
     }
   }, [EyeballProps, columnData]);
 
@@ -279,8 +234,8 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       {menuPosition && (
         <NodeMenu
           position={menuPosition}
-          selectedNode={selectedNode} // Send server (hostB) as selectedNode
-          investigationTarget={investigationTarget} // Send HostA details as investigation target
+          selectedNode={selectedNodeRef.current}
+          investigationTarget={investigationTarget}
           onClose={closeMenu}
         />
       )}
