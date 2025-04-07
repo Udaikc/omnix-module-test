@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
-import { DataSet, Network, Node, Edge } from "vis-network/standalone";
+import { DataSet, Network, type Node, type Edge } from "vis-network/standalone";
 import "vis-network/styles/vis-network.css";
 import NodeMenu from "./NodeMenu";
 import "./styles/NetworkContainer.css";
@@ -72,36 +72,66 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
     resetStyling();
 
-    const positions = network.getPositions([uniqueId]);
-    const nodePosition = positions[uniqueId];
-    if (nodePosition) {
-      const { x, y } = network.canvasToDOM(nodePosition);
-      const details = getNodeDetailsById(uniqueId);
-      selectedNodeRef.current = uniqueId;
-      setMenuPosition({ x, y });
-      setInvestigationTarget(details);
-      setSelectedNode(details.hostB);
-
-      network.body.data.nodes.update({
-        id: uniqueId,
-        borderWidth: 4,
-        color: { border: "cyan", background: "#7b7b7b" },
-      });
-
-      network.getConnectedEdges(uniqueId).forEach((edgeId) => {
-        network.body.data.edges.update({
-          id: edgeId,
-          color: { color: "cyan" },
+    if (uniqueId === "hostA") {
+      // Special handling for HostA
+      const positions = network.getPositions(["hostA"]);
+      const nodePosition = positions["hostA"];
+      if (nodePosition) {
+        const { x, y } = network.canvasToDOM(nodePosition);
+        setMenuPosition({ x, y });
+        setInvestigationTarget({
+          hostB: "hostA",
+          appId: columnData.appId,
+          geoLocation: columnData.geoLocation,
+          hostGroupB: columnData.hostGroupB,
+          serverOctets: columnData.serverOctets,
+          serverPort: columnData.serverPort,
         });
-      });
+        setSelectedNode("hostA");
 
-      network.body.data.nodes.update({
-        id: "hostA",
-        borderWidth: 4,
-        color: { border: "cyan", background: "#7b7b7b" },
-      });
+        network.body.data.nodes.update({
+          id: "hostA",
+          borderWidth: 4,
+          color: { border: "cyan", background: "#7b7b7b" },
+        });
+
+        network.body.data.edges.forEach((edge: any) => {
+          if (edge.from === "hostA" || edge.to === "hostA") {
+            network.body.data.edges.update({
+              id: edge.id,
+              color: { color: "cyan" },
+            });
+          }
+        });
+      }
+    } else {
+      // Regular node click handling
+      const positions = network.getPositions([uniqueId]);
+      const nodePosition = positions[uniqueId];
+      if (nodePosition) {
+        const { x, y } = network.canvasToDOM(nodePosition);
+        const details = getNodeDetailsById(uniqueId);
+        selectedNodeRef.current = uniqueId;
+        setMenuPosition({ x, y });
+        setInvestigationTarget(details);
+        setSelectedNode(details.hostB);
+
+        network.body.data.nodes.update({
+          id: uniqueId,
+          borderWidth: 4,
+          color: { border: "cyan", background: "#7b7b7b" },
+        });
+
+        network.getConnectedEdges(uniqueId).forEach((edgeId) => {
+          network.body.data.edges.update({
+            id: edgeId,
+            color: { color: "cyan" },
+          });
+        });
+      }
     }
   };
+
 
   const closeMenu = () => {
     setMenuPosition(null);
@@ -233,6 +263,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       networkRef.current.on("click", (event: any) => {
         if (event.nodes.length > 0) {
           const clickedNodeId = event.nodes[0];
+          console.log(event.nodes);
           if (clickedNodeId === selectedNodeRef.current) {
             resetStyling();
             closeMenu();
