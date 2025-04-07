@@ -61,6 +61,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       network.body.data.edges.update({
         id: edge.id,
         color: { color: isEitherMalicious ? "red" : "green" },
+        dash: false, // Ensuring solid lines
       });
     });
   };
@@ -76,7 +77,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
     if (nodePosition) {
       const { x, y } = network.canvasToDOM(nodePosition);
       const details = getNodeDetailsById(uniqueId);
-      selectedNodeRef.current = uniqueId;
+      selectedNodeRef.current = details.hostB;
       setMenuPosition({ x, y });
       setInvestigationTarget(details);
 
@@ -90,6 +91,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         network.body.data.edges.update({
           id: edgeId,
           color: { color: "cyan" },
+          dash: false, // Ensuring solid lines
         });
       });
 
@@ -145,9 +147,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
 
       const nodeTitle = `Resolved Host: ${hostB}\nProtocol: ${protocol}\nPort: ${serverPort}\nISP: ${ispName}\nISP Org: ${ispOrg}\nISP No: ${ispNo}\nOctets: ${serverOctets}`;
 
-      // Group nodes based on their 'scope' (Internal or External)
-      const groupId = scope === "External" ? 1 : 2;
-
+      // Remove grouping based on scope (groups are removed)
       nodes.add({
         id: uniqueId,
         label: hostB,
@@ -159,7 +159,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         color: nodeDetails.IsMalicious
           ? { border: "red", background: "#7b7b7b" }
           : "#7b7b7b",
-        group: groupId, // Assign group based on scope
       });
 
       const edgeColor = nodeDetails.IsMalicious || columnData.isHostAMalicious === "true" ? "red" : "green";
@@ -167,6 +166,7 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         width: serverOctets,
         color: { color: edgeColor },
         arrows: { middle: { enabled: true, scaleFactor: 1, type: "arrow" } },
+        dash: false, // Ensure solid lines
       };
 
       if (DataDirection === "ToClient") {
@@ -185,18 +185,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
       const options = {
         interaction: { navigationButtons: true, keyboard: true },
         physics: { enabled: true, solver: "forceAtlas2Based" },
-        groups: {
-          1: { // External Group
-            shape: "dot",
-            color: { background: "blue", border: "darkblue" },
-            label: "External",
-          },
-          2: { // Internal Group
-            shape: "dot",
-            color: { background: "green", border: "darkgreen" },
-            label: "Internal",
-          },
-        },
       };
 
       networkRef.current = new Network(networkContainer.current, { nodes, edges }, options);
@@ -211,7 +199,6 @@ const NetworkGraph: React.FC<NetworkGraphProps> = ({ EyeballProps, columnData })
         borderWidth: 2,
         color: { border: "red", background: "#7b7b7b" },
         title: `Application: ${columnData.appId}\nGeoLocation: ${columnData.geoLocation}\nHost Group: ${columnData.hostGroupB}\nServer Volume: ${columnData.serverOctets}\nServer Port: ${columnData.serverPort}`,
-        group: 2, // Assign hostA to the Internal group
       });
 
       setInvestigationTarget({
